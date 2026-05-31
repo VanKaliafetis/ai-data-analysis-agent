@@ -38,11 +38,10 @@ Built using:
 
 # Demo
 
-See:
+![Demo](assets/demo/demo.gif)
 
-```text
-assets/demo/demo.mp4
-```
+Full video:
+[demo.mp4](assets/demo/demo.mp4)
 
 ---
 
