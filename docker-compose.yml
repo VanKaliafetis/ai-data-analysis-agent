@@ -1,0 +1,10 @@
+services:
+  dataagent:
+    build: .
+    env_file: .env
+    volumes:
+      - ./data:/app/data:ro
+      - ./runs:/app/runs
+      - ./outputs:/app/outputs
+    stdin_open: true
+    tty: true

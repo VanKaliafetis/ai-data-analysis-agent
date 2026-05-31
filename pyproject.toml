@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dataagent"
+version = "0.1.0"
+description = "CLI AI agent for natural-language data analysis — no framework, hand-rolled loop"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "groq>=0.11",
+    "google-genai>=1.0",
+    "pandas>=2.2",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "plotly>=5.22",
+    "kaleido>=0.2.1",
+    "scipy>=1.12",
+    "scikit-learn>=1.4",
+    "openpyxl>=3.1",
+    "python-dotenv>=1.0",
+    "rich>=13.0",
+    "streamlit>=1.36.0",
+]
+
+[project.scripts]
+dataagent = "dataagent.__main__:main"
+dataagent-eval = "eval.harness:main"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.4",
+    "pytest>=8.0",
+    "pytest-timeout>=2.3",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dataagent", "src/eval"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dataagent", "eval"]
+
+[tool.pytest.ini_options]
+testpaths = ["src/eval"]
+timeout = 120
+pythonpath = ["src"]
