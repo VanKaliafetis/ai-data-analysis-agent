@@ -1,165 +1,300 @@
-# DataAgent
+# AI Data Analysis Agent
 
-CLI-based AI data analyst agent for CSV/Excel files.
+Autonomous LLM-powered data analysis agent for CSV and Excel datasets.
 
-It takes a natural-language question, inspects the dataset, calls tools, runs pandas/matplotlib code in a subprocess sandbox, recovers from errors, and writes a final answer with trace logs and chart outputs.
+The system can:
+- inspect dataset schemas
+- execute sandboxed Python analysis
+- generate matplotlib charts
+- perform exploratory data analysis (EDA)
+- produce structured written insights
+- log tool execution traces
+- benchmark providers with an eval harness
+
+Built using:
+- Python
+- Streamlit
+- Groq
+- Gemini
+- Pandas
+- Matplotlib
 
 ---
 
-## Project Structure
+# Features
+
+- Autonomous agent loop
+- Tool-calling architecture
+- Sandboxed Python execution
+- Automatic chart generation
+- Streamlit dashboard UI
+- Live agent activity feed
+- Trace logging
+- Eval/benchmark harness
+- Multi-provider support (Groq/Gemini)
+- Markdown/CSV/JSON report export
+
+---
+
+# Demo
+
+See:
+
+```text
+assets/demo/demo.mp4
+```
+
+---
+
+# Screenshots
+
+## Dashboard
+
+![Dashboard](assets/screenshots/Dashboard.png)
+
+---
+
+## Chart Generation
+
+![Chart Generation](assets/screenshots/Chart_Creation.png)
+
+---
+
+## Analysis Output
+
+![Analysis Output](assets/screenshots/Analysis_Output.png)
+
+---
+
+# Project Structure
 
 ```text
 assets/
-  screenshots/          # README screenshots / demo captures
+  demo/                 # demo video/gifs
+  screenshots/          # README screenshots
 
 data/
-  raw/                  # input datasets used by the CLI and eval harness
-  processed/            # optional cleaned/derived datasets
+  raw/                  # input datasets
+  processed/            # optional cleaned datasets
 
-models/                 # reserved for local/Ollama model metadata or future artifacts
+models/                 # reserved for future local model artifacts
 
 outputs/
-  figures/              # generated charts from agent/eval runs
-  reports/              # eval benchmark reports: markdown, CSV, JSON
+  figures/              # generated charts
+  reports/              # markdown/json/csv benchmark reports
 
 src/
-  dataagent/            # main package: agent loop, providers, sandbox, tools
-  eval/                 # eval cases, property assertions, benchmark harness
+  dataagent/
+    providers/          # Groq/Gemini integrations
+    sandbox/            # subprocess sandbox executor
+    tools/              # tool registry + tools
+    ui.py               # Streamlit dashboard
+    agent.py            # agent orchestration loop
 
-runs/                   # JSONL trace logs per run, ignored by git
+  eval/
+    cases/              # benchmark datasets/prompts
+    assertions.py       # eval assertions
+    harness.py          # evaluation runner
+
+runs/
+  <run_id>/trace.jsonl  # tool execution traces
 ```
 
 ---
 
-## Quick Start
+# Quick Start
+
+## 1. Create `.env`
+
+```env
+GROQ_API_KEY=your_key_here
+GEMINI_API_KEY=your_key_here
+```
+
+---
+
+## 2. Install dependencies
+
+Using uv:
 
 ```bash
-cp .env.example .env
-# add your GROQ_API_KEY to .env
 uv sync
-uv run python -m dataagent data/raw/titanic.csv
 ```
 
-Example question:
+Or using pip:
 
-```text
-What is the mean age of passengers and what percentage survived?
+```bash
+pip install -r requirements.txt
 ```
 
 ---
 
-## Real Eval / Benchmark Harness
-
-Run the same eval questions against one or more providers:
+## 3. Launch the Streamlit UI
 
 ```bash
-uv run python -m eval.harness --providers groq
+python -m streamlit run src/dataagent/ui.py
 ```
-
-Smoke test only the first two cases:
-
-```bash
-uv run python -m eval.harness --providers groq --limit 2
-```
-
-Outputs are written to:
-
-```text
-outputs/reports/eval_results.md
-outputs/reports/eval_results.csv
-outputs/reports/eval_results.json
-```
-
-Charts generated during evals are written to:
-
-```text
-outputs/figures/
-```
-
-Trace logs are written to:
-
-```text
-runs/<run_id>/trace.jsonl
-```
-
-Each result records:
-
-| Metric | Meaning |
-|---|---|
-| pass/fail | Property-based assertion result |
-| latency_ms | End-to-end case latency |
-| iterations | Number of model calls/tool-loop turns |
-| provider/model | Provider and model used |
-| answer | Final agent answer excerpt |
-| error | Dataset/API/provider failure, if any |
 
 ---
 
-## Architecture
+# Example Prompts
+
+```text
+Perform a complete exploratory data analysis of this dataset.
+```
+
+```text
+Generate a correlation heatmap and explain the strongest relationships.
+```
+
+```text
+Analyze missing values and summarize potential preprocessing steps.
+```
+
+```text
+Identify the most important predictors of survival.
+```
+
+---
+
+# Architecture
 
 ```mermaid
 graph TD
-    U[CLI User] --> A[Hand-written Agent Loop]
-    A --> P[LLMProvider Interface]
-    P --> G[Groq Provider]
-    P --> M[Gemini Provider]
-    A --> R[Tool Registry]
-    R --> S1[inspect_schema]
-    R --> S2[run_python]
-    R --> S3[read_cell_range]
-    R --> S4[save_chart]
-    R --> S5[finish]
-    S2 --> X[Subprocess Sandbox]
-    X --> C[Generated Charts]
-    A --> T[JSONL Trace Logs]
+
+    U[User] --> UI[Streamlit Dashboard]
+
+    UI --> A[Agent Loop]
+
+    A --> P[LLM Provider Interface]
+
+    P --> G[Groq]
+    P --> GM[Gemini]
+
+    A --> T[Tool Registry]
+
+    T --> S1[inspect_schema]
+    T --> S2[run_python]
+    T --> S3[read_cell_range]
+    T --> S4[save_chart]
+    T --> S5[finish]
+
+    S2 --> X[Sandbox Executor]
+
+    X --> C[Generated PNG Charts]
+
+    A --> L[Trace Logs]
+
     E[Eval Harness] --> A
-    E --> O[Markdown/CSV/JSON Reports]
+
+    E --> R[Markdown / CSV / JSON Reports]
 ```
 
 ---
 
-## Tool Catalogue
+# Tool Catalogue
 
 | Tool | Purpose |
 |---|---|
-| `inspect_schema` | Shape, dtypes, head, null counts, and summary stats |
-| `run_python` | Executes pandas/matplotlib code in a subprocess sandbox |
-| `read_cell_range` | Reads a specific CSV/Excel slice for messy files |
-| `save_chart` | Saves the current matplotlib figure |
-| `finish` | Stop condition with final written answer |
+| `inspect_schema` | Dataset shape, dtypes, null counts, statistics |
+| `run_python` | Executes pandas/matplotlib analysis in sandbox |
+| `read_cell_range` | Reads partial CSV/Excel slices |
+| `save_chart` | Persists matplotlib figures |
+| `finish` | Final structured response output |
 
 ---
 
-## Sandbox Threat Model
+# Sandbox Threat Model
 
-The sandbox is designed for a local trusted-user portfolio demo. It reduces accidental damage but is **not** a production-grade isolation boundary.
+The sandbox is designed for:
+- local trusted-user workflows
+- portfolio demonstrations
+- safe-ish subprocess execution
 
-Mitigations included:
-
-- subprocess execution
-- timeout cap
-- POSIX memory limit where available
-- obvious shell/network/import escape blocklist
-- chart output isolated to `outputs/figures/`
+Included mitigations:
+- subprocess execution isolation
+- timeout limits
+- restricted imports
+- blocked shell/network operations
+- isolated chart output directories
 
 Not guaranteed:
-
-- kernel-level network isolation
-- protection from every Python escape trick
-- safe execution of malicious code from untrusted users
+- production-grade isolation
+- protection against all Python escape vectors
+- secure execution of malicious user code
 
 ---
 
-## Current Priority Completed
+# Eval / Benchmark Harness
 
-This version focuses on **Priority 1: real eval/benchmark harness**.
+Run evaluation benchmarks:
 
-Implemented now:
+```bash
+python -m eval.harness --providers groq
+```
 
-- runnable eval CLI
-- real markdown/CSV/JSON result outputs
-- latency measurement
-- provider/model tracking
-- iteration/model-call counting
-- missing-key and missing-dataset error reporting
-- clean project structure matching the `assets / data / models / outputs / src` style
+Limit benchmark size:
+
+```bash
+python -m eval.harness --providers groq --limit 2
+```
+
+Generated outputs:
+
+```text
+outputs/reports/
+outputs/figures/
+runs/<run_id>/trace.jsonl
+```
+
+Tracked metrics:
+- pass/fail assertions
+- latency
+- iteration count
+- provider/model usage
+- answer quality
+- execution errors
+
+---
+
+# Current Status
+
+Implemented:
+- Streamlit dashboard
+- Autonomous agent loop
+- Tool calling
+- Python sandbox execution
+- Automatic chart generation
+- Activity feed
+- Eval harness
+- Report export
+- Multi-provider support
+
+Planned future improvements:
+- SQL database support
+- Vector database integration
+- Local LLM support
+- Persistent memory
+- Multi-agent workflows
+- Async task execution
+- Web data connectors
+
+---
+
+# Tech Stack
+
+- Python
+- Streamlit
+- Pandas
+- Matplotlib
+- FastAPI
+- Groq API
+- Gemini API
+- uv
+- JSONL tracing
+
+---
+
+# License
+
+MIT
